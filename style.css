@@ -198,7 +198,6 @@ img { max-width: 100%; }
     max-width: 1400px;
     margin-left: auto;
     margin-right: auto;
-    padding-top: calc(var(--navbar-height) + 2rem);
 }
 
 /* --------------------------------------------------------------------------
@@ -914,7 +913,6 @@ body.dark-mode .preview-table tbody tr:nth-child(even) {
     /* Content */
     .main-content {
         padding: 1rem;
-        padding-top: calc(var(--navbar-height) + 1rem);
     }
 
     .kpi-grid { grid-template-columns: 1fr; gap: 0.75rem; }

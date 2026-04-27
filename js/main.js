@@ -624,15 +624,12 @@ function updateAllKPIs() {
         totalEmployeesEl.textContent = total.toLocaleString();
     }
 
-    // Calculate expenditure from uploaded data or demo data
+    // Calculate expenditure from uploaded data; show zero when no data is present
     let totalExpenditure = 0;
     if (state.expenditures && state.expenditures.length > 0) {
         totalExpenditure = state.expenditures.reduce((sum, record) => {
             return sum + (parseFloat(record.total) || 0);
         }, 0);
-    } else {
-        // Demo data
-        totalExpenditure = (Math.random() * 10000 + 5000);
     }
     
     const totalExpenditureEl = document.getElementById('totalExpenditure');
@@ -776,7 +773,7 @@ function initTrendCharts() {
 
     const isDark = document.body.classList.contains('dark-mode');
     const bgColor = isDark ? '#1f2937' : '#ffffff';
-    const textColor = isDark ? '#374151' : '#374151';
+    const textColor = isDark ? '#f3f4f6' : '#374151';
     const gridColor = isDark ? '#4b5563' : '#e5e7eb';
 
     const dates = ['2026-04-10', '2026-04-12', '2026-04-14', '2026-04-17', '2026-04-20', '2026-04-24'];
@@ -1068,7 +1065,8 @@ function initComparisonCharts() {
     const bgColor = isDark ? '#1f2937' : '#ffffff';
     const textColor = isDark ? '#f3f4f6' : '#374151';
 
-    // Chart 1: Total Expenditure by Nationality
+    // Chart 1: Total Expenditure by Nationality — use live calculated totals
+    const natTotals = calculateNationalityTotals();
     const ctx1 = document.getElementById('comparisonChart1');
     if (ctx1) {
         window.comparisonChart1 = new Chart(ctx1, {
@@ -1077,7 +1075,12 @@ function initComparisonCharts() {
                 labels: ['Bangladeshi', 'Sri Lankan', 'Indian', 'Malagasy'],
                 datasets: [{
                     label: 'Total Expenditure (Rs)',
-                    data: [3200, 2400, 650, 1130],
+                    data: [
+                        natTotals.bangladeshi,
+                        natTotals.srilankan,
+                        natTotals.indian,
+                        natTotals.malagasy
+                    ],
                     backgroundColor: [
                         '#ff6b6b',
                         '#4ecdc4',
@@ -1112,16 +1115,24 @@ function initComparisonCharts() {
         });
     }
 
-    // Chart 2: Per-Head Spending Comparison (Plotly)
+    // Chart 2: Per-Head Spending Comparison (Plotly) — calculated from live data
+    const empKeys = ['bangladeshi', 'srilankan', 'indian', 'malagasy'];
+    const perHeadValues = empKeys.map(k => {
+        const emp  = state.employees[k] || 0;
+        const spend = natTotals[k] || 0;
+        return emp > 0 ? parseFloat((spend / emp).toFixed(2)) : 0;
+    });
+    const perHeadLabels = perHeadValues.map(v => `Rs ${v.toFixed(2)}`);
+
     const data2 = [{
         x: ['Bangladeshi', 'Sri Lankan', 'Indian', 'Malagasy'],
-        y: [4.57, 4.80, 4.71, 4.52],
+        y: perHeadValues,
         type: 'bar',
         marker: {
             color: ['#ff6b6b', '#4ecdc4', '#ffa502', '#9b59b6'],
             line: { width: 2, color: '#ffffff' }
         },
-        text: ['Rs 4.57', 'Rs 4.80', 'Rs 4.71', 'Rs 4.52'],
+        text: perHeadLabels,
         textposition: 'outside',
         hovertemplate: '<b>%{x}</b><br>Per Head: %{text}<extra></extra>'
     }];
