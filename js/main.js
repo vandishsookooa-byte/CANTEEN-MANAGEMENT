@@ -321,12 +321,10 @@ function saveEmployee(nationality) {
     updateEmployeeDisplays();
     updateHomeSummaryCards();
     
-    // Refresh home page KPIs if on home page
-    if (state.currentPage === 'home') {
-        updateAllKPIs();
-        updateHomeSummaryCards();
-        initHomeCharts();
-    }
+    // Always refresh home charts so the KPI and doughnut chart reflect the new count
+    // even when the user is currently on the Employees page.
+    // The next navigation to 'home' will also re-trigger these via navigateTo().
+    initHomeCharts();
 }
 
 function cancelEdit(nationality) {
@@ -493,14 +491,22 @@ function normalizeRow(row) {
     const date = getColumn(row, ['date', 'transaction', 'purchase']) || new Date().toISOString().split('T')[0];
     const item = getColumn(row, ['item', 'product', 'name']) || 'Unknown';
     const quantity = parseQuantity(getColumn(row, ['quantity', 'qty', 'amount']) || '0');
-    const price = parsePrice(getColumn(row, ['price', 'cost', 'rate', 'unit']) || '0');
+    const price = parsePrice(getColumn(row, ['price', 'cost', 'rate']) || '0');
     const nationality = normalizeNationality(getColumn(row, ['nationality', 'nation', 'country']) || 'Unknown');
-    
+
+    // Detect measurement unit from item name
+    const itemLower = item.toLowerCase();
+    let unit = 'kg'; // default
+    if (itemLower.includes('oil'))   unit = 'L';
+    else if (itemLower.includes('bread')) unit = 'pc';
+    else if (itemLower.includes('egg'))   unit = 'unit';
+
     return {
         date,
         item,
         quantity,
         price,
+        unit,
         total: (quantity * price).toFixed(2),
         nationality,
         timestamp: new Date().toISOString()
@@ -533,7 +539,7 @@ function showUploadPreview(filename, data) {
 
     if (!preview) return;
 
-    const headers = ['Date', 'Item', 'Quantity', 'Price', 'Total', 'Nationality'];
+    const headers = ['Date', 'Item', 'Quantity', 'Unit', 'Price (Rs)', 'Total (Rs)', 'Nationality'];
     
     if (thead) {
         thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
@@ -547,6 +553,7 @@ function showUploadPreview(filename, data) {
                 <td>${row.date}</td>
                 <td>${row.item}</td>
                 <td>${row.quantity.toFixed(2)}</td>
+                <td>${row.unit || 'kg'}</td>
                 <td>Rs ${row.price.toFixed(2)}</td>
                 <td>Rs ${row.total}</td>
                 <td>${row.nationality}</td>
@@ -575,7 +582,31 @@ function confirmUpload() {
     if (fileInput) fileInput.value = '';
     
     showNotification(`✅ Successfully uploaded ${state.uploadedData.recordCount} records!`);
+
+    // Refresh all displays so the new data is immediately visible everywhere
     updateAllKPIs();
+    updateEmployeeDisplays();
+    updateHomeSummaryCards();
+
+    // Redraw charts if on a chart page
+    if (state.currentPage === 'home') initHomeCharts();
+    else if (state.currentPage === 'trends') initTrendCharts();
+    else if (state.currentPage === 'per-head') initPerHeadCharts();
+    else if (state.currentPage === 'comparison') initComparisonCharts();
+
+    // Sync with backend if available (non-blocking)
+    if (typeof syncWithBackend === 'function') syncWithBackend();
+
+    state.uploadedData = null;
+}
+
+function cancelUpload() {
+    const preview = document.getElementById('uploadPreview');
+    const fileInput = document.getElementById('fileInput');
+    if (preview) preview.style.display = 'none';
+    if (fileInput) fileInput.value = '';
+    state.uploadedData = null;
+    showNotification('Upload cancelled.');
 }
 
 // ============================================================================
@@ -1251,10 +1282,7 @@ function generateReport(type) {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>Bangladeshi</td><td>700</td><td>Rs 3,200</td><td>Rs 4.57</td><td>43.3%</td></tr>
-                        <tr><td>Sri Lankan</td><td>500</td><td>Rs 2,400</td><td>Rs 4.80</td><td>32.5%</td></tr>
-                        <tr><td>Indian</td><td>138</td><td>Rs 650</td><td>Rs 4.71</td><td>8.8%</td></tr>
-                        <tr><td>Malagasy</td><td>250</td><td>Rs 1,130</td><td>Rs 4.52</td><td>15.3%</td></tr>
+                        ${generateComparisonRows()}
                     </tbody>
                 </table>
             `;
@@ -1297,6 +1325,60 @@ function generateReport(type) {
     reportContent.innerHTML = content;
     if (exportPdfBtn) exportPdfBtn.style.display = 'inline-flex';
     if (exportExcelBtn) exportExcelBtn.style.display = 'inline-flex';
+
+    // Show the output container (Reports page wraps content in #reportOutput)
+    const reportOutput = document.getElementById('reportOutput');
+    if (reportOutput) reportOutput.style.display = 'block';
+}
+
+// Helper: calculate expenditure totals per nationality from uploaded data
+function calculateNationalityTotals() {
+    const totals = { bangladeshi: 0, srilankan: 0, indian: 0, malagasy: 0 };
+
+    if (state.expenditures && state.expenditures.length > 0) {
+        state.expenditures.forEach(record => {
+            const nat = String(record.nationality).toLowerCase().replace(/\s+/g, '');
+            const key = nat.includes('banglad') ? 'bangladeshi'
+                      : nat.includes('sri')     ? 'srilankan'
+                      : nat.includes('indian')  ? 'indian'
+                      : nat.includes('malagasy')? 'malagasy'
+                      : null;
+            if (key) totals[key] += parseFloat(record.total) || 0;
+        });
+    }
+
+    return totals;
+}
+
+// Helper: build comparison table rows from live state
+function generateComparisonRows() {
+    const nationalities = [
+        { key: 'bangladeshi', label: 'Bangladeshi' },
+        { key: 'srilankan',   label: 'Sri Lankan'  },
+        { key: 'indian',      label: 'Indian'       },
+        { key: 'malagasy',    label: 'Malagasy'     }
+    ];
+
+    const employeeTotal = Object.values(state.employees).reduce((a, b) => a + b, 0);
+    const spendingTotals = calculateNationalityTotals();
+    const totalSpend = Object.values(spendingTotals).reduce((a, b) => a + b, 0);
+
+    return nationalities.map(nat => {
+        const employees = state.employees[nat.key] || 0;
+        const spending  = spendingTotals[nat.key]  || 0;
+        const perHead   = employees > 0 ? (spending / employees).toFixed(2) : '0.00';
+        const pctEmp    = employeeTotal > 0
+            ? ((employees / employeeTotal) * 100).toFixed(1)
+            : '0.0';
+
+        return `<tr>
+            <td>${nat.label}</td>
+            <td>${employees.toLocaleString()}</td>
+            <td>Rs ${spending.toFixed(2)}</td>
+            <td>Rs ${perHead}</td>
+            <td>${pctEmp}%</td>
+        </tr>`;
+    }).join('');
 }
 
 function exportReport(format) {
@@ -1315,9 +1397,12 @@ window.editEmployee = editEmployee;
 window.saveEmployee = saveEmployee;
 window.cancelEdit = cancelEdit;
 window.confirmUpload = confirmUpload;
+window.cancelUpload = cancelUpload;
 window.initHomeCharts = initHomeCharts;
 window.initTrendCharts = initTrendCharts;
 window.initPerHeadCharts = initPerHeadCharts;
 window.initComparisonCharts = initComparisonCharts;
 window.downloadEmployeeHistory = downloadEmployeeHistory;
 window.getEmployeeChangeHistory = getEmployeeChangeHistory;
+window.calculateNationalityTotals = calculateNationalityTotals;
+window.generateComparisonRows = generateComparisonRows;
