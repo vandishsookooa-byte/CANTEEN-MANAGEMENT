@@ -494,12 +494,12 @@ function normalizeRow(row) {
     const price = parsePrice(getColumn(row, ['price', 'cost', 'rate']) || '0');
     const nationality = normalizeNationality(getColumn(row, ['nationality', 'nation', 'country']) || 'Unknown');
 
-    // Detect measurement unit from item name
-    const itemLower = item.toLowerCase();
-    let unit = 'kg'; // default
-    if (itemLower.includes('oil'))   unit = 'L';
-    else if (itemLower.includes('bread')) unit = 'pc';
-    else if (itemLower.includes('egg'))   unit = 'unit';
+    // Detect measurement unit from item name using whole-word matching to avoid
+    // false positives (e.g. "Eggplant" must not match "egg", "Breadfruit" is fine as "pc").
+    let unit = 'kg'; // default for most dry goods
+    if (/\boil\b/i.test(item))       unit = 'L';
+    else if (/\bbread\b/i.test(item)) unit = 'pc';
+    else if (/\beggs?\b/i.test(item)) unit = 'unit';
 
     return {
         date,
@@ -595,7 +595,9 @@ function confirmUpload() {
     else if (state.currentPage === 'comparison') initComparisonCharts();
 
     // Sync with backend if available (non-blocking)
-    if (typeof syncWithBackend === 'function') syncWithBackend();
+    if (typeof syncWithBackend === 'function') {
+        try { syncWithBackend(); } catch (e) { console.warn('Backend sync error:', e); }
+    }
 
     state.uploadedData = null;
 }

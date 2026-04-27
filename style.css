@@ -793,10 +793,10 @@ img { max-width: 100%; }
 
 .preview-table tbody tr:hover { background: var(--color-primary-light); }
 
-.preview-table tbody tr:nth-child(even) { background: rgba(0,0,0,.02); }
+.preview-table tbody tr:nth-child(even) { background: rgba(0,0,0,.05); }
 
 body.dark-mode .preview-table tbody tr:nth-child(even) {
-    background: rgba(255,255,255,.03);
+    background: rgba(255,255,255,.06);
 }
 
 /* --------------------------------------------------------------------------

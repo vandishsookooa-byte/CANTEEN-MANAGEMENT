@@ -4,13 +4,19 @@
 // Falls back gracefully to localStorage-only (offline) mode.
 // ============================================================================
 
+// Base URL for the backend API.
+// Override this constant (or inject via a config file) when deploying
+// to a different host or port.
 const API_BASE_URL = 'http://localhost:3000/api';
+
+// Health-check timeout in milliseconds
+const API_TIMEOUT_MS = 3000;
 
 // Check if the backend API is reachable
 async function checkAPIHealth() {
     try {
         const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 3000);
+        const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
         const response = await fetch(`${API_BASE_URL}/health`, {
             method: 'GET',
             signal: controller.signal
