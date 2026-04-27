@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Canteen Management – Admin Panel</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>" />
+  <style>
+    /* Toggle switch for availability */
+    .toggle-switch { cursor: pointer; display: inline-flex; align-items: center; gap: .3rem; }
+    .toggle-switch input { display: none; }
+    .toggle-label { font-size: .82rem; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="brand">
+      <span>🍽️</span>
+      <span>Canteen Management</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html">Menu</a>
+      <a href="admin.html" class="active">Admin</a>
+    </div>
+  </nav>
+
+  <!-- ===== ADMIN CONTAINER ===== -->
+  <div class="admin-container">
+
+    <div class="admin-header">
+      <h2>⚙️ Admin Panel</h2>
+      <a href="index.html" class="btn-primary" style="display:inline-block;padding:.5rem 1rem;border-radius:6px;text-decoration:none">
+        ← Back to Menu
+      </a>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row" aria-label="Dashboard statistics">
+      <div class="stat-card">
+        <div class="stat-icon orange">🍽️</div>
+        <div class="stat-info">
+          <h4 id="statItems">0</h4>
+          <p>Total Items</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon green">✅</div>
+        <div class="stat-info">
+          <h4 id="statAvail">0</h4>
+          <p>Available</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon blue">📦</div>
+        <div class="stat-info">
+          <h4 id="statOrders">0</h4>
+          <p>Orders Placed</p>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon purple">💰</div>
+        <div class="stat-info">
+          <h4 id="statRevenue">₹0</h4>
+          <p>Revenue</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="admin-grid">
+
+      <!-- ===== ADD / EDIT FORM ===== -->
+      <div class="form-card">
+        <div class="card-header">
+          <span id="formTitle">➕ Add New Item</span>
+        </div>
+        <div class="card-body">
+          <form id="menuForm" novalidate>
+
+            <div class="form-group">
+              <label for="itemName">Item Name <span aria-hidden="true">*</span></label>
+              <input
+                type="text"
+                id="itemName"
+                name="itemName"
+                placeholder="e.g. Veg Burger"
+                required
+                maxlength="60"
+              />
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="itemCategory">Category <span aria-hidden="true">*</span></label>
+                <select id="itemCategory" name="itemCategory" required>
+                  <option value="">-- Select --</option>
+                  <option value="Breakfast">Breakfast</option>
+                  <option value="Snacks">Snacks</option>
+                  <option value="Meals">Meals</option>
+                  <option value="Beverages">Beverages</option>
+                  <option value="Desserts">Desserts</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="itemType">Type <span aria-hidden="true">*</span></label>
+                <select id="itemType" name="itemType" required>
+                  <option value="veg">🟢 Veg</option>
+                  <option value="nonveg">🔴 Non-Veg</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="itemPrice">Price (₹) <span aria-hidden="true">*</span></label>
+                <input
+                  type="number"
+                  id="itemPrice"
+                  name="itemPrice"
+                  placeholder="e.g. 50"
+                  min="1"
+                  max="9999"
+                  step="0.01"
+                  required
+                />
+              </div>
+
+              <div class="form-group">
+                <label for="itemEmoji">Emoji Icon</label>
+                <input
+                  type="text"
+                  id="itemEmoji"
+                  name="itemEmoji"
+                  placeholder="e.g. 🍔"
+                  maxlength="4"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="itemDesc">Description</label>
+              <textarea
+                id="itemDesc"
+                name="itemDesc"
+                placeholder="Short description of the item…"
+                maxlength="120"
+              ></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">➕ Add Item</button>
+            <button type="button" class="reset-btn" id="resetFormBtn">↺ Reset Form</button>
+
+          </form>
+        </div>
+      </div>
+
+      <!-- ===== MENU TABLE ===== -->
+      <div class="table-card">
+        <div class="card-header">📋 Menu Items</div>
+        <div class="card-body" style="padding:0">
+          <div class="admin-table-wrapper">
+            <table class="admin-table" aria-label="Menu items table">
+              <thead>
+                <tr>
+                  <th></th>
+                  <th>Name</th>
+                  <th>Category</th>
+                  <th>Price</th>
+                  <th>Type</th>
+                  <th>Available</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="menuTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /.admin-grid -->
+
+  </div><!-- /.admin-container -->
+
+  <!-- ===== TOAST ===== -->
+  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <p>🍽️ Canteen Management System &copy; 2024 &middot; <a href="index.html">Customer View</a></p>
+  </footer>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>

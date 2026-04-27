@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Canteen Management – Menu</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍽️</text></svg>" />
+</head>
+<body>
+
+  <!-- ===== NAVBAR ===== -->
+  <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <div class="brand">
+      <span>🍽️</span>
+      <span>Canteen Management</span>
+    </div>
+
+    <div class="nav-links">
+      <a href="index.html" class="active">Menu</a>
+      <a href="admin.html">Admin</a>
+      <button class="cart-btn" id="cartBtn" aria-label="Open cart">
+        🛒 Cart <span class="cart-count" id="cartCount">0</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ===== HERO ===== -->
+  <section class="hero" aria-label="Search menu">
+    <h1>🍽️ Welcome to Our Canteen</h1>
+    <p>Fresh, tasty meals served with love. Order your favourite food below!</p>
+    <div class="hero-search">
+      <input
+        type="search"
+        id="searchInput"
+        placeholder="Search food items…"
+        aria-label="Search menu items"
+        autocomplete="off"
+      />
+      <button type="button" aria-label="Search">🔍 Search</button>
+    </div>
+  </section>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <div class="main-container">
+
+    <!-- Category Sidebar -->
+    <aside class="sidebar" aria-label="Filter by category">
+      <h3>Categories</h3>
+      <ul class="category-list" id="categoryList" role="list"></ul>
+    </aside>
+
+    <!-- Menu Grid -->
+    <main class="menu-section" aria-label="Menu items">
+      <h2>📋 Today's Menu</h2>
+      <div class="menu-grid" id="menuGrid" role="list"></div>
+    </main>
+
+  </div>
+
+  <!-- ===== ORDER HISTORY ===== -->
+  <section class="orders-section" aria-label="Order history">
+    <h2>📦 My Orders</h2>
+    <div id="ordersContainer"></div>
+  </section>
+
+  <!-- ===== CART OVERLAY ===== -->
+  <div class="cart-overlay" id="cartOverlay" role="presentation"></div>
+
+  <!-- ===== CART PANEL ===== -->
+  <aside class="cart-panel" id="cartPanel" aria-label="Shopping cart" role="complementary">
+    <div class="cart-header">
+      <h3>🛒 Your Cart</h3>
+      <button class="close-cart" id="closeCart" aria-label="Close cart">✕</button>
+    </div>
+
+    <div class="cart-items" id="cartItems" aria-live="polite"></div>
+
+    <div class="cart-footer">
+      <div class="cart-summary">
+        <div class="row"><span>Subtotal</span><span id="cartSubtotal">₹0</span></div>
+        <div class="row"><span>GST (5%)</span><span id="cartTax">₹0</span></div>
+        <div class="row total-row"><span>Total</span><span id="cartTotal">₹0</span></div>
+      </div>
+      <button class="checkout-btn" id="checkoutBtn">💳 Checkout</button>
+      <button class="clear-cart-btn" id="clearCartBtn">🗑 Clear Cart</button>
+    </div>
+  </aside>
+
+  <!-- ===== CONFIRM ORDER MODAL ===== -->
+  <div class="modal-overlay" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="modalHeading">
+    <div class="modal">
+      <div class="modal-icon">🧾</div>
+      <h2 id="modalHeading">Confirm Your Order</h2>
+      <p>Please review your order before placing it.</p>
+
+      <table class="order-details-table" aria-label="Order items">
+        <thead>
+          <tr><th>Item</th><th>Qty</th><th>Amount</th></tr>
+        </thead>
+        <tbody id="modalOrderItems"></tbody>
+      </table>
+
+      <div class="modal-total">
+        <span>GST (5%)</span><span id="modalTax">₹0</span>
+      </div>
+      <div class="modal-total">
+        <span>Grand Total</span><span id="modalTotal">₹0</span>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-outline" id="cancelOrderBtn">✕ Cancel</button>
+        <button class="btn-primary" id="confirmOrderBtn">✅ Place Order</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== TOAST CONTAINER ===== -->
+  <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- ===== FOOTER ===== -->
+  <footer>
+    <p>🍽️ Canteen Management System &copy; 2024 &middot; <a href="admin.html">Admin Panel</a></p>
+  </footer>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
