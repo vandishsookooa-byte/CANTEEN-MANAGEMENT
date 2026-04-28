@@ -73,7 +73,7 @@ def read_sheet(nationality):
         df['UNIT PRICE'] = pd.to_numeric(df['UNIT PRICE'], errors='coerce').fillna(0)
         return df
     except Exception:
-        app.logger.warning("Error reading sheet for nationality: %s", nationality)
+        app.logger.warning("Error reading Excel sheet")
         return pd.DataFrame()
 
 
