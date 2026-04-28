@@ -2,8 +2,12 @@ from flask import Flask, render_template, jsonify, request
 import pandas as pd
 import json
 import os
+import logging
 
 app = Flask(__name__)
+
+# Configure logging - avoid logging sensitive path data in production
+logging.basicConfig(level=logging.WARNING)
 
 EXCEL_FILE = r"C:\Users\transport\Desktop\Canteen Management\Canteen.xlsx"
 
@@ -40,6 +44,8 @@ CATEGORY_MAP = {
 
 UPLOADED_DATA_FILE = os.path.join(os.path.dirname(__file__), 'data', 'uploaded_data.json')
 
+DAYS_IN_PERIOD = 15
+
 
 def get_employees():
     if os.path.exists(EMPLOYEES_FILE):
@@ -66,8 +72,8 @@ def read_sheet(nationality):
         df['QTY'] = pd.to_numeric(df['QTY'], errors='coerce').fillna(0)
         df['UNIT PRICE'] = pd.to_numeric(df['UNIT PRICE'], errors='coerce').fillna(0)
         return df
-    except Exception as e:
-        print(f"Error reading {nationality}: {e}")
+    except Exception:
+        app.logger.warning("Error reading sheet for nationality: %s", nationality)
         return pd.DataFrame()
 
 
@@ -121,7 +127,7 @@ def api_summary():
             'employees': employees,
             'excelAvailable': excel_available
         })
-    except Exception as e:
+    except Exception:
         employees = get_employees()
         return jsonify({
             'totalEmployees': sum(employees.values()),
@@ -130,7 +136,7 @@ def api_summary():
             'period': 'N/A',
             'employees': employees,
             'excelAvailable': False,
-            'error': str(e)
+            'error': 'Unable to load expenditure data'
         })
 
 
@@ -195,8 +201,8 @@ def api_items():
                     'total': float(row.get('TOTAL', 0))
                 })
         return jsonify(result)
-    except Exception as e:
-        return jsonify({'error': str(e), 'data': []})
+    except Exception:
+        return jsonify({'error': 'Unable to load items data', 'data': []})
 
 
 @app.route('/api/comparison')
@@ -215,7 +221,7 @@ def api_comparison():
                 period = 'N/A'
 
             per_head = round(total_exp / emp_count, 2) if emp_count > 0 else 0
-            per_day = round(total_exp / 15, 2)
+            per_day = round(total_exp / DAYS_IN_PERIOD, 2)
 
             result.append({
                 'nationality': nat,
@@ -228,8 +234,8 @@ def api_comparison():
                 'period': period
             })
         return jsonify(result)
-    except Exception as e:
-        return jsonify({'error': str(e), 'data': []})
+    except Exception:
+        return jsonify({'error': 'Unable to load comparison data', 'data': []})
 
 
 @app.route('/api/perhead')
@@ -272,8 +278,8 @@ def api_perhead():
                 'total': round(total, 2)
             })
         return jsonify(result)
-    except Exception as e:
-        return jsonify({'error': str(e), 'data': []})
+    except Exception:
+        return jsonify({'error': 'Unable to load per-head data', 'data': []})
 
 
 @app.route('/api/trends')
@@ -319,8 +325,8 @@ def api_trends():
             'items': all_items,
             'datasets': datasets
         })
-    except Exception as e:
-        return jsonify({'error': str(e), 'items': [], 'datasets': []})
+    except Exception:
+        return jsonify({'error': 'Unable to load trends data', 'items': [], 'datasets': []})
 
 
 @app.route('/api/upload', methods=['POST'])
@@ -350,8 +356,8 @@ def api_upload():
             json.dump(records, f, default=str)
 
         return jsonify({'success': True, 'records': len(records)})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception:
+        return jsonify({'success': False, 'error': 'Failed to process uploaded file'}), 500
 
 
 @app.route('/api/report/<report_type>')
@@ -365,7 +371,7 @@ def api_report(report_type):
                 df = read_sheet(nat)
                 if not df.empty:
                     total = float(df['TOTAL'].sum())
-                    per_day = round(total / 15, 2)
+                    per_day = round(total / DAYS_IN_PERIOD, 2)
                     rows.append({
                         'Nationality': LABELS[nat],
                         'Total Expenditure': round(total, 2),
@@ -441,9 +447,9 @@ def api_report(report_type):
         else:
             return jsonify({'error': 'Unknown report type'}), 400
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        return jsonify({'error': 'Failed to generate report'}), 500
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=os.environ.get('FLASK_DEBUG', 'false').lower() == 'true')

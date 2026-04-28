@@ -28,13 +28,18 @@ function showNotification(message, type = 'success') {
     const notification = document.createElement('div');
     notification.className = 'notification';
     const bgColor = type === 'error' ? 'linear-gradient(135deg,#ef4444,#b91c1c)' : 'linear-gradient(135deg,#10b981,#059669)';
-    notification.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i><span>${message}</span>`;
     notification.style.cssText = `
         position:fixed;top:80px;right:20px;background:${bgColor};color:white;
         padding:14px 22px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.2);
         z-index:10000;animation:slideIn .3s ease-out;font-weight:600;
         display:flex;align-items:center;gap:10px;max-width:400px;
     `;
+    const icon = document.createElement('i');
+    icon.className = `fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}`;
+    const text = document.createElement('span');
+    text.textContent = message;
+    notification.appendChild(icon);
+    notification.appendChild(text);
     document.body.appendChild(notification);
     setTimeout(() => {
         notification.style.animation = 'slideOut .3s ease-in';
@@ -230,16 +235,31 @@ async function loadComparisonPage() {
 function updateComparisonTable(data) {
     const tbody = document.getElementById('comparisonTableBody');
     if (!tbody) return;
-    tbody.innerHTML = data.map(row => `
-        <tr>
-            <td><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${row.color};margin-right:8px;"></span>${row.label}</td>
-            <td>${row.employees.toLocaleString()}</td>
-            <td>Rs ${row.totalExpenditure.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-            <td>Rs ${row.perHead.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-            <td>Rs ${row.perDay.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}</td>
-            <td>${row.period}</td>
-        </tr>
-    `).join('');
+    tbody.textContent = '';
+    data.forEach(row => {
+        const tr = document.createElement('tr');
+
+        const tdNat = document.createElement('td');
+        const dot = document.createElement('span');
+        dot.style.cssText = `display:inline-block;width:12px;height:12px;border-radius:50%;background:${row.color};margin-right:8px;`;
+        tdNat.appendChild(dot);
+        tdNat.appendChild(document.createTextNode(row.label));
+        tr.appendChild(tdNat);
+
+        [
+            row.employees.toLocaleString(),
+            `Rs ${row.totalExpenditure.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}`,
+            `Rs ${row.perHead.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}`,
+            `Rs ${row.perDay.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}`,
+            row.period
+        ].forEach(text => {
+            const td = document.createElement('td');
+            td.textContent = text;
+            tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+    });
 }
 
 // ============================================================================
@@ -249,15 +269,23 @@ function updateComparisonTable(data) {
 function setupTheme() {
     if (state.theme === 'dark') {
         document.body.classList.add('dark-mode');
-        document.getElementById('themeToggle').innerHTML = '<i class="fas fa-sun"></i>';
+        const btn = document.getElementById('themeToggle');
+        btn.textContent = '';
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-sun';
+        btn.appendChild(icon);
     }
 }
 
 function toggleTheme() {
     state.theme = state.theme === 'light' ? 'dark' : 'light';
     document.body.classList.toggle('dark-mode');
-    const icon = state.theme === 'dark' ? 'sun' : 'moon';
-    document.getElementById('themeToggle').innerHTML = `<i class="fas fa-${icon}"></i>`;
+    const iconClass = state.theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    const btn = document.getElementById('themeToggle');
+    btn.textContent = '';
+    const icon = document.createElement('i');
+    icon.className = iconClass;
+    btn.appendChild(icon);
     localStorage.setItem('theme', state.theme);
 
     // Redraw current page charts
@@ -286,7 +314,7 @@ function editEmployee(nationality) {
 async function saveEmployee(nationality) {
     const input = document.getElementById(`input-${nationality}`);
     const newValue = parseInt(input.value);
-    if (isNaN(newValue) || newValue < 0) { alert('Please enter a valid number'); return; }
+    if (isNaN(newValue) || newValue < 0) { showNotification('Please enter a valid number', 'error'); return; }
 
     try {
         const result = await CanteenAPI.updateEmployee(nationality, newValue);
@@ -345,14 +373,32 @@ function handleFileSelect(file) {
     // Show a simple preview row
     const thead = document.getElementById('previewHead');
     const tbody = document.getElementById('previewBody');
-    if (thead) thead.innerHTML = '<tr><th>File</th><th>Size</th><th>Type</th></tr>';
-    if (tbody) tbody.innerHTML = `<tr><td>${file.name}</td><td>${(file.size/1024).toFixed(1)} KB</td><td>${file.type || 'unknown'}</td></tr>`;
+    if (thead) {
+        thead.textContent = '';
+        const tr = document.createElement('tr');
+        ['File', 'Size', 'Type'].forEach(h => {
+            const th = document.createElement('th');
+            th.textContent = h;
+            tr.appendChild(th);
+        });
+        thead.appendChild(tr);
+    }
+    if (tbody) {
+        tbody.textContent = '';
+        const tr = document.createElement('tr');
+        [file.name, `${(file.size / 1024).toFixed(1)} KB`, file.type || 'unknown'].forEach(v => {
+            const td = document.createElement('td');
+            td.textContent = v;
+            tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+    }
 
     showNotification(`File "${file.name}" ready to upload`);
 }
 
 async function confirmUpload() {
-    if (!state.uploadedFile) { alert('No file selected'); return; }
+    if (!state.uploadedFile) { showNotification('No file selected', 'error'); return; }
     const formData = new FormData();
     formData.append('file', state.uploadedFile);
 
@@ -393,36 +439,84 @@ async function generateReport(type) {
 
     if (!reportContent) return;
 
-    reportContent.innerHTML = '<p>Generating report...</p>';
+    reportContent.textContent = '';
+    const loadingP = document.createElement('p');
+    loadingP.textContent = 'Generating report...';
+    reportContent.appendChild(loadingP);
     if (reportPreview) reportPreview.style.display = 'block';
 
     try {
         const data = await CanteenAPI.getReport(type);
 
         if (data.error) {
-            reportContent.innerHTML = `<p style="color:red">Error: ${data.error}</p>`;
+            reportContent.textContent = '';
+            const errP = document.createElement('p');
+            errP.style.color = 'red';
+            errP.textContent = `Error: ${data.error}`;
+            reportContent.appendChild(errP);
             return;
         }
 
         const cols = data.columns || [];
         const rows = data.rows || [];
 
-        let html = `<h3>${type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ')} Report</h3>`;
-        html += `<p><strong>Report Date:</strong> ${new Date().toLocaleDateString()}</p>`;
-        html += `<p><strong>Total Records:</strong> ${rows.length}</p>`;
-        html += `<div style="overflow-x:auto;margin-top:1rem"><table class="preview-table">`;
-        html += `<thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>`;
-        html += `<tbody>`;
-        rows.forEach(row => {
-            html += `<tr>${cols.map(c => `<td>${row[c] !== undefined ? row[c] : ''}</td>`).join('')}</tr>`;
-        });
-        html += `</tbody></table></div>`;
+        reportContent.textContent = '';
 
-        reportContent.innerHTML = html;
+        const title = document.createElement('h3');
+        title.textContent = `${type.charAt(0).toUpperCase() + type.slice(1).replace('-', ' ')} Report`;
+        reportContent.appendChild(title);
+
+        const datePara = document.createElement('p');
+        const dateStrong = document.createElement('strong');
+        dateStrong.textContent = 'Report Date: ';
+        datePara.appendChild(dateStrong);
+        datePara.appendChild(document.createTextNode(new Date().toLocaleDateString()));
+        reportContent.appendChild(datePara);
+
+        const countPara = document.createElement('p');
+        const countStrong = document.createElement('strong');
+        countStrong.textContent = 'Total Records: ';
+        countPara.appendChild(countStrong);
+        countPara.appendChild(document.createTextNode(String(rows.length)));
+        reportContent.appendChild(countPara);
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'overflow-x:auto;margin-top:1rem';
+        const table = document.createElement('table');
+        table.className = 'preview-table';
+
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        cols.forEach(c => {
+            const th = document.createElement('th');
+            th.textContent = c;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        rows.forEach(row => {
+            const tr = document.createElement('tr');
+            cols.forEach(c => {
+                const td = document.createElement('td');
+                td.textContent = row[c] !== undefined ? String(row[c]) : '';
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+        reportContent.appendChild(wrapper);
+
         if (exportPdfBtn) exportPdfBtn.style.display = 'inline-flex';
         if (exportExcelBtn) exportExcelBtn.style.display = 'inline-flex';
     } catch (err) {
-        reportContent.innerHTML = `<p style="color:red">Error generating report: ${err.message}</p>`;
+        reportContent.textContent = '';
+        const errP = document.createElement('p');
+        errP.style.color = 'red';
+        errP.textContent = `Error generating report: ${err.message}`;
+        reportContent.appendChild(errP);
     }
 }
 

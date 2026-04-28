@@ -3,52 +3,55 @@
 // ============================================================================
 
 const CanteenAPI = {
-    async getSummary() {
-        const r = await fetch('/api/summary');
+    async _fetch(url, options) {
+        const r = await fetch(url, options);
+        if (!r.ok) {
+            throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+        }
         return r.json();
+    },
+
+    async getSummary() {
+        return this._fetch('/api/summary');
     },
 
     async getEmployees() {
-        const r = await fetch('/api/employees');
-        return r.json();
+        return this._fetch('/api/employees');
     },
 
     async updateEmployee(nationality, count) {
-        const r = await fetch('/api/employees', {
+        return this._fetch('/api/employees', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nationality, count })
         });
-        return r.json();
     },
 
     async getItems(nationality = 'all') {
-        const r = await fetch(`/api/items?nationality=${nationality}`);
-        return r.json();
+        return this._fetch(`/api/items?nationality=${nationality}`);
     },
 
     async getComparison() {
-        const r = await fetch('/api/comparison');
-        return r.json();
+        return this._fetch('/api/comparison');
     },
 
     async getPerHead(nationality = 'all', category = 'all') {
-        const r = await fetch(`/api/perhead?nationality=${nationality}&category=${category}`);
-        return r.json();
+        return this._fetch(`/api/perhead?nationality=${nationality}&category=${category}`);
     },
 
     async getTrends(nationality = 'all') {
-        const r = await fetch(`/api/trends?nationality=${nationality}`);
-        return r.json();
+        return this._fetch(`/api/trends?nationality=${nationality}`);
     },
 
     async getReport(type) {
-        const r = await fetch(`/api/report/${type}`);
-        return r.json();
+        return this._fetch(`/api/report/${type}`);
     },
 
     async uploadFile(formData) {
         const r = await fetch('/api/upload', { method: 'POST', body: formData });
+        if (!r.ok) {
+            throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+        }
         return r.json();
     }
 };
