@@ -1,0 +1,67 @@
+/* ============================================================================
+   CANTEEN MANAGEMENT SYSTEM - RESPONSIVE STYLESHEET
+   ============================================================================ */
+
+/* Tablet: <= 1024px */
+@media (max-width: 1024px) {
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .reports-grid { grid-template-columns: repeat(2, 1fr); }
+    .navbar-menu { gap: 2px; }
+    .nav-link { padding: 7px 10px; font-size: 0.825rem; }
+}
+
+/* Mobile: <= 768px */
+@media (max-width: 768px) {
+    .hamburger { display: flex; align-items: center; }
+
+    .navbar-menu {
+        display: none;
+        position: absolute;
+        top: 64px;
+        left: 0;
+        right: 0;
+        background: var(--bg-navbar);
+        flex-direction: column;
+        padding: 1rem;
+        gap: 4px;
+        box-shadow: var(--shadow-lg);
+        z-index: 999;
+    }
+    .navbar-menu.active { display: flex; }
+    .nav-link { width: 100%; justify-content: flex-start; padding: 10px 14px; }
+
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .charts-grid { grid-template-columns: 1fr; }
+    .summary-cards { flex-wrap: wrap; }
+    .summary-card { flex: 1 1 calc(50% - 0.5rem); }
+    .filters { flex-direction: column; align-items: stretch; }
+    .filter-group select { width: 100%; }
+    .employees-grid { grid-template-columns: 1fr; }
+    .reports-grid { grid-template-columns: repeat(2, 1fr); }
+    .page-header { flex-direction: column; align-items: flex-start; }
+    .main-content { padding: 1rem; }
+
+    .comparison-table-wrapper { overflow-x: auto; }
+    .comparison-table { min-width: 600px; }
+
+    .kpi-value { font-size: 1.3rem; }
+    .employee-count { font-size: 2.2rem; }
+}
+
+/* Small Mobile: <= 480px */
+@media (max-width: 480px) {
+    .kpi-grid { grid-template-columns: 1fr; }
+    .summary-card { flex: 1 1 100%; }
+    .reports-grid { grid-template-columns: 1fr; }
+    .navbar-brand span { display: none; }
+    .page-header h1 { font-size: 1.3rem; }
+
+    .employee-form { flex-direction: column; }
+    .employee-form input { width: 100%; }
+    .employee-form .btn { width: 100%; justify-content: center; }
+}
+
+/* <= 600px: employees grid */
+@media (max-width: 600px) {
+    .employees-grid { grid-template-columns: 1fr; }
+}
