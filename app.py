@@ -315,7 +315,7 @@ def api_item_comparison():
 @app.route('/api/generate-report')
 def api_generate_report():
     """Generate report as PDF or Excel"""
-    ALLOWED_TYPES   = {'trend', 'per-head', 'comparison', 'detailed', 'cumulative'}
+    ALLOWED_TYPES   = {'trend', 'per-head', 'comparison', 'detailed', 'cumulative', 'month-comparison', 'item-comparison'}
     ALLOWED_FORMATS = {'excel', 'pdf'}
     ALLOWED_PERIODS = set(
         ['April 2026 (P1)', 'April 2026 (P2)', 'March 2026 (P1)', 'March 2026 (P2)', '']
