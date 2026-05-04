@@ -1,6 +1,7 @@
 from flask import Flask, render_template, jsonify, request, send_file
 import pandas as pd
 from datetime import datetime
+import html as html_lib
 import os
 import io
 
@@ -162,7 +163,7 @@ def api_dashboard():
             'period': period or 'All Periods'
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error occurred'}), 500
 
 @app.route('/api/trends')
 def api_trends():
@@ -177,7 +178,7 @@ def api_trends():
             data[nat] = [daily] * 15
         return jsonify({'labels': labels, 'data': data, 'period': period})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error occurred'}), 500
 
 @app.route('/api/per-head')
 def api_per_head():
@@ -208,7 +209,7 @@ def api_per_head():
             }
         return jsonify(result)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error occurred'}), 500
 
 @app.route('/api/comparison')
 def api_comparison():
@@ -218,7 +219,7 @@ def api_comparison():
         totals = get_demo_totals(period)
         return jsonify({'nationalities': totals})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error occurred'}), 500
 
 @app.route('/api/cumulative-trend')
 def api_cumulative_trend():
@@ -240,7 +241,7 @@ def api_cumulative_trend():
             result[nat] = cumulative
         return jsonify(result)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error occurred'}), 500
 
 @app.route('/api/month-comparison')
 def api_month_comparison():
@@ -272,7 +273,7 @@ def api_month_comparison():
             'month2_label': month2
         })
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error occurred'}), 500
 
 @app.route('/api/items-list')
 def api_items_list():
@@ -284,7 +285,7 @@ def api_items_list():
                 all_items.add(item['item'])
         return jsonify({'items': sorted(all_items)})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error occurred'}), 500
 
 @app.route('/api/item-comparison')
 def api_item_comparison():
@@ -309,7 +310,7 @@ def api_item_comparison():
                 result[nat] = {'quantity': 0, 'unit': '', 'unit_price': 0, 'total_cost': 0, 'per_head': 0}
         return jsonify(result)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error occurred'}), 500
 
 @app.route('/api/generate-report')
 def api_generate_report():
@@ -324,7 +325,7 @@ def api_generate_report():
         else:
             return generate_pdf_report(report_type, period)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({'error': 'An internal error occurred'}), 500
 
 def generate_excel_report(report_type, period=''):
     """Generate Excel report"""
@@ -417,7 +418,7 @@ def generate_pdf_report(report_type, period=''):
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Canteen Report — {report_type}</title>
+<title>Canteen Report</title>
 <style>
 body {{ font-family: Arial, sans-serif; margin: 40px; }}
 h1 {{ color: #2563eb; }}
@@ -428,8 +429,8 @@ tr:nth-child(even) {{ background: #f3f4f6; }}
 </style>
 </head>
 <body>
-<h1>Canteen Management — {report_type.replace("-"," ").title()} Report</h1>
-<p><strong>Period:</strong> {period or 'All Periods'}</p>
+<h1>Canteen Management — {html_lib.escape(report_type.replace("-"," ").title())} Report</h1>
+<p><strong>Period:</strong> {html_lib.escape(period or 'All Periods')}</p>
 <p><strong>Generated:</strong> {datetime.now().strftime("%Y-%m-%d %H:%M")}</p>
 <table>
 <thead><tr><th>Nationality</th><th>Employees</th><th>Total Expenditure</th><th>Per Head</th></tr></thead>

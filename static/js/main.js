@@ -11,6 +11,10 @@ function formatNum(value, decimals = 2) {
     return Number(value || 0).toLocaleString('en-IN', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
 }
 
+function escapeHtml(value) {
+    return String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // ── State ────────────────────────────────────────────────────
 const state = {
     employees: {
@@ -66,7 +70,12 @@ function saveState() {
 function showNotification(message) {
     const notification = document.createElement('div');
     notification.className = 'notification';
-    notification.innerHTML = `<i class="fas fa-info-circle"></i><span>${message}</span>`;
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-info-circle';
+    const span = document.createElement('span');
+    span.textContent = message;
+    notification.appendChild(icon);
+    notification.appendChild(span);
     notification.style.cssText = `
         position: fixed;
         top: 80px;
@@ -1041,9 +1050,9 @@ function renderItemComparisonTable(data, item) {
     tbody.innerHTML = nats.map(({ key, label }) => {
         const d = data[key] || {};
         return `<tr>
-            <td>${item}</td>
-            <td>${label}</td>
-            <td>${formatNum(d.quantity || 0)} ${d.unit || ''}</td>
+            <td>${escapeHtml(item)}</td>
+            <td>${escapeHtml(label)}</td>
+            <td>${formatNum(d.quantity || 0)} ${escapeHtml(d.unit || '')}</td>
             <td>${formatRs(d.unit_price || 0)}</td>
             <td>${formatRs(d.total_cost || 0)}</td>
             <td>${formatRs(d.per_head || 0)}</td>
