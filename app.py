@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, send_file
+from flask import Flask, render_template, jsonify, request, send_file, Response
 import pandas as pd
 from datetime import datetime
 import html as html_lib
@@ -452,12 +452,7 @@ tr:nth-child(even) {{ background: #f3f4f6; }}
 </body>
 </html>'''
 
-    buf = io.BytesIO(html.encode())
-    return send_file(
-        buf,
-        mimetype='text/html',
-        as_attachment=False
-    )
+    return Response(html, mimetype='text/html')
 
 # Legacy routes kept for backward compatibility
 @app.route('/bangladesh')
