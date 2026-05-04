@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canteen Management System</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+
+<!-- ============================================================
+     NAVBAR
+     ============================================================ -->
+<nav class="navbar">
+    <div class="navbar-brand">
+        <i class="fas fa-utensils"></i>
+        <span>Canteen Management</span>
+    </div>
+
+    <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <span></span><span></span><span></span>
+    </button>
+
+    <ul class="navbar-menu" id="navbarMenu">
+        <li>
+            <a href="#" class="nav-link active" data-page="home">
+                <i class="fas fa-home"></i> Home
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-link" data-page="employees">
+                <i class="fas fa-users"></i> Employees
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-link" data-page="trends">
+                <i class="fas fa-chart-line"></i> Trends
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-link" data-page="per-head">
+                <i class="fas fa-calculator"></i> Per Head
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-link" data-page="comparison">
+                <i class="fas fa-balance-scale"></i> Comparison
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-link" data-page="upload">
+                <i class="fas fa-upload"></i> Upload
+            </a>
+        </li>
+        <li>
+            <a href="#" class="nav-link" data-page="reports">
+                <i class="fas fa-file-alt"></i> Reports
+            </a>
+        </li>
+    </ul>
+
+    <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark mode">
+        <i class="fas fa-moon"></i>
+    </button>
+</nav>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main class="main-content">
+
+    <!-- ========================================================
+         HOME PAGE
+         ======================================================== -->
+    <section class="page active" id="home">
+        <div class="page-header">
+            <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+            <p>Overview of canteen operations and employee statistics</p>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background: linear-gradient(135deg,#2563eb,#1d4ed8);">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="kpi-info">
+                    <p class="kpi-label">Total Employees</p>
+                    <h2 class="kpi-value" id="totalEmployees">1,588</h2>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background: linear-gradient(135deg,#10b981,#059669);">
+                    <i class="fas fa-rupee-sign"></i>
+                </div>
+                <div class="kpi-info">
+                    <p class="kpi-label">Total Expenditure</p>
+                    <h2 class="kpi-value" id="totalExpenditure">Rs 0.00</h2>
+                </div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-icon" style="background: linear-gradient(135deg,#f59e0b,#d97706);">
+                    <i class="fas fa-user-tag"></i>
+                </div>
+                <div class="kpi-info">
+                    <p class="kpi-label">Avg Per Head</p>
+                    <h2 class="kpi-value" id="avgPerHead">Rs 0.00</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3 class="chart-title"><i class="fas fa-chart-pie"></i> Employee Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="homeChart1"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title"><i class="fas fa-chart-bar"></i> Nationality Breakdown</h3>
+                <div class="chart-container" id="homeChart2"></div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="summary-grid">
+            <div class="summary-card" data-nationality="bangladeshi">
+                <div class="summary-flag">🇧🇩</div>
+                <div class="summary-info">
+                    <p class="summary-label">Bangladeshi</p>
+                    <p class="summary-value">700</p>
+                    <p class="summary-percent employee-percentage">44.1%</p>
+                </div>
+            </div>
+            <div class="summary-card" data-nationality="srilankan">
+                <div class="summary-flag">🇱🇰</div>
+                <div class="summary-info">
+                    <p class="summary-label">Sri Lankan</p>
+                    <p class="summary-value">500</p>
+                    <p class="summary-percent employee-percentage">31.5%</p>
+                </div>
+            </div>
+            <div class="summary-card" data-nationality="indian">
+                <div class="summary-flag">🇮🇳</div>
+                <div class="summary-info">
+                    <p class="summary-label">Indian</p>
+                    <p class="summary-value">138</p>
+                    <p class="summary-percent employee-percentage">8.7%</p>
+                </div>
+            </div>
+            <div class="summary-card" data-nationality="malagasy">
+                <div class="summary-flag">🇲🇬</div>
+                <div class="summary-info">
+                    <p class="summary-label">Malagasy</p>
+                    <p class="summary-value">250</p>
+                    <p class="summary-percent employee-percentage">15.7%</p>
+                </div>
+            </div>
+            <div class="summary-card summary-total">
+                <div class="summary-flag">👥</div>
+                <div class="summary-info">
+                    <p class="summary-label">Total</p>
+                    <p class="summary-value" id="summaryTotal">1,588</p>
+                    <p class="summary-percent">100%</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================
+         EMPLOYEES PAGE
+         ======================================================== -->
+    <section class="page" id="employees">
+        <div class="page-header">
+            <h1><i class="fas fa-users"></i> Employee Management</h1>
+            <p>Manage employee counts per nationality. Changes update all KPIs instantly.</p>
+        </div>
+
+        <div class="employee-grid">
+
+            <!-- Bangladeshi -->
+            <div class="employee-card" data-nationality="bangladeshi">
+                <div class="employee-header">
+                    <span class="flag">🇧🇩</span>
+                    <h3>Bangladeshi</h3>
+                </div>
+                <div class="employee-body">
+                    <div class="employee-display">
+                        <p class="employee-count" id="count-bangladeshi">700</p>
+                        <p class="employee-percentage">employees</p>
+                    </div>
+                    <div class="employee-form" style="display:none;">
+                        <input type="number" id="input-bangladeshi" class="employee-input"
+                               min="0" placeholder="Enter count">
+                        <div class="form-actions">
+                            <button class="btn btn-save" onclick="saveEmployee('bangladeshi')">
+                                <i class="fas fa-check"></i> Save
+                            </button>
+                            <button class="btn btn-cancel" onclick="cancelEdit('bangladeshi')">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                    <button class="btn btn-edit btn-edit-nat" onclick="editEmployee('bangladeshi')">
+                        <i class="fas fa-edit"></i> Edit Count
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sri Lankan -->
+            <div class="employee-card" data-nationality="srilankan">
+                <div class="employee-header">
+                    <span class="flag">🇱🇰</span>
+                    <h3>Sri Lankan</h3>
+                </div>
+                <div class="employee-body">
+                    <div class="employee-display">
+                        <p class="employee-count" id="count-srilankan">500</p>
+                        <p class="employee-percentage">employees</p>
+                    </div>
+                    <div class="employee-form" style="display:none;">
+                        <input type="number" id="input-srilankan" class="employee-input"
+                               min="0" placeholder="Enter count">
+                        <div class="form-actions">
+                            <button class="btn btn-save" onclick="saveEmployee('srilankan')">
+                                <i class="fas fa-check"></i> Save
+                            </button>
+                            <button class="btn btn-cancel" onclick="cancelEdit('srilankan')">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                    <button class="btn btn-edit btn-edit-nat" onclick="editEmployee('srilankan')">
+                        <i class="fas fa-edit"></i> Edit Count
+                    </button>
+                </div>
+            </div>
+
+            <!-- Indian -->
+            <div class="employee-card" data-nationality="indian">
+                <div class="employee-header">
+                    <span class="flag">🇮🇳</span>
+                    <h3>Indian</h3>
+                </div>
+                <div class="employee-body">
+                    <div class="employee-display">
+                        <p class="employee-count" id="count-indian">138</p>
+                        <p class="employee-percentage">employees</p>
+                    </div>
+                    <div class="employee-form" style="display:none;">
+                        <input type="number" id="input-indian" class="employee-input"
+                               min="0" placeholder="Enter count">
+                        <div class="form-actions">
+                            <button class="btn btn-save" onclick="saveEmployee('indian')">
+                                <i class="fas fa-check"></i> Save
+                            </button>
+                            <button class="btn btn-cancel" onclick="cancelEdit('indian')">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                    <button class="btn btn-edit btn-edit-nat" onclick="editEmployee('indian')">
+                        <i class="fas fa-edit"></i> Edit Count
+                    </button>
+                </div>
+            </div>
+
+            <!-- Malagasy -->
+            <div class="employee-card" data-nationality="malagasy">
+                <div class="employee-header">
+                    <span class="flag">🇲🇬</span>
+                    <h3>Malagasy</h3>
+                </div>
+                <div class="employee-body">
+                    <div class="employee-display">
+                        <p class="employee-count" id="count-malagasy">250</p>
+                        <p class="employee-percentage">employees</p>
+                    </div>
+                    <div class="employee-form" style="display:none;">
+                        <input type="number" id="input-malagasy" class="employee-input"
+                               min="0" placeholder="Enter count">
+                        <div class="form-actions">
+                            <button class="btn btn-save" onclick="saveEmployee('malagasy')">
+                                <i class="fas fa-check"></i> Save
+                            </button>
+                            <button class="btn btn-cancel" onclick="cancelEdit('malagasy')">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                    <button class="btn btn-edit btn-edit-nat" onclick="editEmployee('malagasy')">
+                        <i class="fas fa-edit"></i> Edit Count
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="employee-summary-bar">
+            <span><i class="fas fa-users"></i> Total Employees:</span>
+            <strong id="summaryTotal">1,588</strong>
+            <button class="btn btn-secondary" onclick="downloadEmployeeHistory()">
+                <i class="fas fa-download"></i> Export History
+            </button>
+        </div>
+    </section>
+
+    <!-- ========================================================
+         TRENDS PAGE
+         ======================================================== -->
+    <section class="page" id="trends">
+        <div class="page-header">
+            <h1><i class="fas fa-chart-line"></i> Expenditure Trends</h1>
+            <p>Daily and weekly expenditure trend analysis</p>
+        </div>
+
+        <div class="filter-bar">
+            <label>Date Range:
+                <input type="date" id="trendDateFrom" class="filter-input">
+            </label>
+            <span>to</span>
+            <label>
+                <input type="date" id="trendDateTo" class="filter-input">
+            </label>
+            <button class="btn btn-primary" onclick="updateTrendChart()">
+                <i class="fas fa-filter"></i> Apply Filter
+            </button>
+        </div>
+
+        <div class="charts-grid charts-grid-3">
+            <div class="chart-card chart-card-full">
+                <h3 class="chart-title"><i class="fas fa-chart-area"></i> Daily Expenditure Trend</h3>
+                <div class="chart-container">
+                    <canvas id="trendChart1"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title"><i class="fas fa-chart-bar"></i> Weekly Nationality Breakdown</h3>
+                <div class="chart-container">
+                    <canvas id="trendChart2"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title"><i class="fas fa-wave-square"></i> Cumulative Expenditure</h3>
+                <div class="chart-container">
+                    <canvas id="trendChart3"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================
+         PER HEAD PAGE
+         ======================================================== -->
+    <section class="page" id="per-head">
+        <div class="page-header">
+            <h1><i class="fas fa-calculator"></i> Per Head Analysis</h1>
+            <p>Consumption metrics per employee by item and nationality</p>
+        </div>
+
+        <div class="filter-bar">
+            <label>Nationality:
+                <select id="perHeadNationality" class="filter-select">
+                    <option value="all">All Nationalities</option>
+                    <option value="bangladeshi">Bangladeshi</option>
+                    <option value="srilankan">Sri Lankan</option>
+                    <option value="indian">Indian</option>
+                    <option value="malagasy">Malagasy</option>
+                </select>
+            </label>
+            <button class="btn btn-primary" onclick="updatePerHeadChart()">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+        </div>
+
+        <div class="charts-grid charts-grid-3">
+            <div class="chart-card chart-card-full">
+                <h3 class="chart-title"><i class="fas fa-chart-bar"></i> Item-wise Per Head Consumption</h3>
+                <div class="chart-container">
+                    <canvas id="perHeadChart1"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title"><i class="fas fa-chart-pie"></i> Consumption Distribution</h3>
+                <div class="chart-container">
+                    <canvas id="perHeadChart2"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title"><i class="fas fa-list-ol"></i> Top 10 Items by Volume</h3>
+                <div class="chart-container">
+                    <canvas id="perHeadChart3"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================
+         COMPARISON PAGE
+         ======================================================== -->
+    <section class="page" id="comparison">
+        <div class="page-header">
+            <h1><i class="fas fa-balance-scale"></i> Nationality Comparison</h1>
+            <p>Comparative analysis of expenditure and consumption by nationality</p>
+        </div>
+
+        <div class="filter-bar">
+            <label>Period:
+                <select id="comparisonPeriod" class="filter-select">
+                    <option value="month">This Month</option>
+                    <option value="fortnight1">Fortnight 1 (1-15)</option>
+                    <option value="fortnight2">Fortnight 2 (16-31)</option>
+                </select>
+            </label>
+            <button class="btn btn-primary" onclick="updateComparisonChart()">
+                <i class="fas fa-sync"></i> Refresh
+            </button>
+        </div>
+
+        <div class="charts-grid charts-grid-3">
+            <div class="chart-card chart-card-full">
+                <h3 class="chart-title"><i class="fas fa-chart-bar"></i> Total Expenditure by Nationality</h3>
+                <div class="chart-container">
+                    <canvas id="comparisonChart1"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title"><i class="fas fa-chart-bar"></i> Per Head Spending Comparison</h3>
+                <div class="chart-container" id="comparisonChart2"></div>
+            </div>
+            <div class="chart-card">
+                <h3 class="chart-title"><i class="fas fa-th"></i> Consumption Heatmap</h3>
+                <div class="chart-container" id="comparisonChart3"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================
+         UPLOAD PAGE
+         ======================================================== -->
+    <section class="page" id="upload">
+        <div class="page-header">
+            <h1><i class="fas fa-upload"></i> Upload Data</h1>
+            <p>Upload CSV or Excel files to import expenditure records</p>
+        </div>
+
+        <div class="upload-card">
+            <div class="upload-zone" id="uploadZone">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                <h3>Drag &amp; Drop your file here</h3>
+                <p>Supports CSV and TSV files</p>
+                <p class="upload-hint">Expected columns: Date, Item Name, Quantity, Price, Nationality</p>
+                <button class="btn btn-primary upload-btn">
+                    <i class="fas fa-folder-open"></i> Browse File
+                </button>
+                <input type="file" id="fileInput" accept=".csv,.tsv,.txt" style="display:none;">
+            </div>
+
+            <div class="upload-preview" id="uploadPreview" style="display:none;">
+                <h3><i class="fas fa-eye"></i> Data Preview (first 10 rows)</h3>
+                <div class="table-wrapper">
+                    <table class="preview-table">
+                        <thead id="previewHead"></thead>
+                        <tbody id="previewBody"></tbody>
+                    </table>
+                </div>
+                <div class="upload-actions">
+                    <button class="btn btn-success" onclick="confirmUpload()">
+                        <i class="fas fa-check-circle"></i> Confirm Upload
+                    </button>
+                    <button class="btn btn-danger" onclick="cancelUpload()">
+                        <i class="fas fa-times-circle"></i> Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="upload-instructions">
+            <h3><i class="fas fa-info-circle"></i> File Format Guide</h3>
+            <div class="instructions-grid">
+                <div class="instruction-card">
+                    <h4>Required Columns</h4>
+                    <ul>
+                        <li><strong>Date</strong> — YYYY-MM-DD format</li>
+                        <li><strong>Item Name</strong> — e.g. Rice, Vegetables</li>
+                        <li><strong>Quantity</strong> — numeric value</li>
+                        <li><strong>Price</strong> — price per unit in Rs</li>
+                        <li><strong>Nationality</strong> — Bangladeshi / Sri Lankan / Indian / Malagasy</li>
+                    </ul>
+                </div>
+                <div class="instruction-card">
+                    <h4>Unit Detection</h4>
+                    <ul>
+                        <li><strong>Oil</strong> → measured in Litres (L)</li>
+                        <li><strong>Bread</strong> → measured in pieces (pc)</li>
+                        <li><strong>Eggs</strong> → measured in units</li>
+                        <li><strong>Other items</strong> → measured in kg</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================================
+         REPORTS PAGE
+         ======================================================== -->
+    <section class="page" id="reports">
+        <div class="page-header">
+            <h1><i class="fas fa-file-alt"></i> Reports</h1>
+            <p>Generate and export detailed canteen expenditure reports</p>
+        </div>
+
+        <div class="report-controls">
+            <button class="btn btn-report" onclick="generateReport('trend')">
+                <i class="fas fa-chart-line"></i> Trend Report
+            </button>
+            <button class="btn btn-report" onclick="generateReport('per-head')">
+                <i class="fas fa-calculator"></i> Per-Head Report
+            </button>
+            <button class="btn btn-report" onclick="generateReport('comparison')">
+                <i class="fas fa-balance-scale"></i> Comparison Report
+            </button>
+            <button class="btn btn-report" onclick="generateReport('detailed')">
+                <i class="fas fa-list"></i> Detailed Report
+            </button>
+        </div>
+
+        <div class="report-output" id="reportOutput" style="display:none;">
+            <div class="report-actions">
+                <button class="btn btn-success" id="exportPdfBtn" style="display:none;"
+                        onclick="exportReport('pdf')">
+                    <i class="fas fa-file-pdf"></i> Export PDF
+                </button>
+                <button class="btn btn-primary" id="exportExcelBtn" style="display:none;"
+                        onclick="exportReport('excel')">
+                    <i class="fas fa-file-excel"></i> Export Excel
+                </button>
+            </div>
+            <div class="report-content" id="reportContent"></div>
+        </div>
+    </section>
+
+</main>
+
+<!-- Scripts -->
+<script src="js/api.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

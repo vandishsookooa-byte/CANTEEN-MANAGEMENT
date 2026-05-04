@@ -321,12 +321,10 @@ function saveEmployee(nationality) {
     updateEmployeeDisplays();
     updateHomeSummaryCards();
     
-    // Refresh home page KPIs if on home page
-    if (state.currentPage === 'home') {
-        updateAllKPIs();
-        updateHomeSummaryCards();
-        initHomeCharts();
-    }
+    // Always refresh home charts so the KPI and doughnut chart reflect the new count
+    // even when the user is currently on the Employees page.
+    // The next navigation to 'home' will also re-trigger these via navigateTo().
+    initHomeCharts();
 }
 
 function cancelEdit(nationality) {
@@ -493,14 +491,22 @@ function normalizeRow(row) {
     const date = getColumn(row, ['date', 'transaction', 'purchase']) || new Date().toISOString().split('T')[0];
     const item = getColumn(row, ['item', 'product', 'name']) || 'Unknown';
     const quantity = parseQuantity(getColumn(row, ['quantity', 'qty', 'amount']) || '0');
-    const price = parsePrice(getColumn(row, ['price', 'cost', 'rate', 'unit']) || '0');
+    const price = parsePrice(getColumn(row, ['price', 'cost', 'rate']) || '0');
     const nationality = normalizeNationality(getColumn(row, ['nationality', 'nation', 'country']) || 'Unknown');
-    
+
+    // Detect measurement unit from item name using whole-word matching to avoid
+    // false positives (e.g. "Eggplant" must not match "egg", "Breadfruit" is fine as "pc").
+    let unit = 'kg'; // default for most dry goods
+    if (/\boil\b/i.test(item))       unit = 'L';
+    else if (/\bbread\b/i.test(item)) unit = 'pc';
+    else if (/\beggs?\b/i.test(item)) unit = 'unit';
+
     return {
         date,
         item,
         quantity,
         price,
+        unit,
         total: (quantity * price).toFixed(2),
         nationality,
         timestamp: new Date().toISOString()
@@ -533,7 +539,7 @@ function showUploadPreview(filename, data) {
 
     if (!preview) return;
 
-    const headers = ['Date', 'Item', 'Quantity', 'Price', 'Total', 'Nationality'];
+    const headers = ['Date', 'Item', 'Quantity', 'Unit', 'Price (Rs)', 'Total (Rs)', 'Nationality'];
     
     if (thead) {
         thead.innerHTML = `<tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
@@ -547,6 +553,7 @@ function showUploadPreview(filename, data) {
                 <td>${row.date}</td>
                 <td>${row.item}</td>
                 <td>${row.quantity.toFixed(2)}</td>
+                <td>${row.unit || 'kg'}</td>
                 <td>Rs ${row.price.toFixed(2)}</td>
                 <td>Rs ${row.total}</td>
                 <td>${row.nationality}</td>
@@ -575,7 +582,33 @@ function confirmUpload() {
     if (fileInput) fileInput.value = '';
     
     showNotification(`✅ Successfully uploaded ${state.uploadedData.recordCount} records!`);
+
+    // Refresh all displays so the new data is immediately visible everywhere
     updateAllKPIs();
+    updateEmployeeDisplays();
+    updateHomeSummaryCards();
+
+    // Redraw charts if on a chart page
+    if (state.currentPage === 'home') initHomeCharts();
+    else if (state.currentPage === 'trends') initTrendCharts();
+    else if (state.currentPage === 'per-head') initPerHeadCharts();
+    else if (state.currentPage === 'comparison') initComparisonCharts();
+
+    // Sync with backend if available (non-blocking)
+    if (typeof syncWithBackend === 'function') {
+        try { syncWithBackend(); } catch (e) { console.warn('Backend sync error:', e); }
+    }
+
+    state.uploadedData = null;
+}
+
+function cancelUpload() {
+    const preview = document.getElementById('uploadPreview');
+    const fileInput = document.getElementById('fileInput');
+    if (preview) preview.style.display = 'none';
+    if (fileInput) fileInput.value = '';
+    state.uploadedData = null;
+    showNotification('Upload cancelled.');
 }
 
 // ============================================================================
@@ -591,15 +624,12 @@ function updateAllKPIs() {
         totalEmployeesEl.textContent = total.toLocaleString();
     }
 
-    // Calculate expenditure from uploaded data or demo data
+    // Calculate expenditure from uploaded data; show zero when no data is present
     let totalExpenditure = 0;
     if (state.expenditures && state.expenditures.length > 0) {
         totalExpenditure = state.expenditures.reduce((sum, record) => {
             return sum + (parseFloat(record.total) || 0);
         }, 0);
-    } else {
-        // Demo data
-        totalExpenditure = (Math.random() * 10000 + 5000);
     }
     
     const totalExpenditureEl = document.getElementById('totalExpenditure');
@@ -743,7 +773,7 @@ function initTrendCharts() {
 
     const isDark = document.body.classList.contains('dark-mode');
     const bgColor = isDark ? '#1f2937' : '#ffffff';
-    const textColor = isDark ? '#374151' : '#374151';
+    const textColor = isDark ? '#f3f4f6' : '#374151';
     const gridColor = isDark ? '#4b5563' : '#e5e7eb';
 
     const dates = ['2026-04-10', '2026-04-12', '2026-04-14', '2026-04-17', '2026-04-20', '2026-04-24'];
@@ -1035,7 +1065,8 @@ function initComparisonCharts() {
     const bgColor = isDark ? '#1f2937' : '#ffffff';
     const textColor = isDark ? '#f3f4f6' : '#374151';
 
-    // Chart 1: Total Expenditure by Nationality
+    // Chart 1: Total Expenditure by Nationality — use live calculated totals
+    const natTotals = calculateNationalityTotals();
     const ctx1 = document.getElementById('comparisonChart1');
     if (ctx1) {
         window.comparisonChart1 = new Chart(ctx1, {
@@ -1044,7 +1075,12 @@ function initComparisonCharts() {
                 labels: ['Bangladeshi', 'Sri Lankan', 'Indian', 'Malagasy'],
                 datasets: [{
                     label: 'Total Expenditure (Rs)',
-                    data: [3200, 2400, 650, 1130],
+                    data: [
+                        natTotals.bangladeshi,
+                        natTotals.srilankan,
+                        natTotals.indian,
+                        natTotals.malagasy
+                    ],
                     backgroundColor: [
                         '#ff6b6b',
                         '#4ecdc4',
@@ -1079,16 +1115,24 @@ function initComparisonCharts() {
         });
     }
 
-    // Chart 2: Per-Head Spending Comparison (Plotly)
+    // Chart 2: Per-Head Spending Comparison (Plotly) — calculated from live data
+    const empKeys = ['bangladeshi', 'srilankan', 'indian', 'malagasy'];
+    const perHeadValues = empKeys.map(k => {
+        const emp  = state.employees[k] || 0;
+        const spend = natTotals[k] || 0;
+        return emp > 0 ? parseFloat((spend / emp).toFixed(2)) : 0;
+    });
+    const perHeadLabels = perHeadValues.map(v => `Rs ${v.toFixed(2)}`);
+
     const data2 = [{
         x: ['Bangladeshi', 'Sri Lankan', 'Indian', 'Malagasy'],
-        y: [4.57, 4.80, 4.71, 4.52],
+        y: perHeadValues,
         type: 'bar',
         marker: {
             color: ['#ff6b6b', '#4ecdc4', '#ffa502', '#9b59b6'],
             line: { width: 2, color: '#ffffff' }
         },
-        text: ['Rs 4.57', 'Rs 4.80', 'Rs 4.71', 'Rs 4.52'],
+        text: perHeadLabels,
         textposition: 'outside',
         hovertemplate: '<b>%{x}</b><br>Per Head: %{text}<extra></extra>'
     }];
@@ -1251,10 +1295,7 @@ function generateReport(type) {
                         </tr>
                     </thead>
                     <tbody>
-                        <tr><td>Bangladeshi</td><td>700</td><td>Rs 3,200</td><td>Rs 4.57</td><td>43.3%</td></tr>
-                        <tr><td>Sri Lankan</td><td>500</td><td>Rs 2,400</td><td>Rs 4.80</td><td>32.5%</td></tr>
-                        <tr><td>Indian</td><td>138</td><td>Rs 650</td><td>Rs 4.71</td><td>8.8%</td></tr>
-                        <tr><td>Malagasy</td><td>250</td><td>Rs 1,130</td><td>Rs 4.52</td><td>15.3%</td></tr>
+                        ${generateComparisonRows()}
                     </tbody>
                 </table>
             `;
@@ -1297,6 +1338,60 @@ function generateReport(type) {
     reportContent.innerHTML = content;
     if (exportPdfBtn) exportPdfBtn.style.display = 'inline-flex';
     if (exportExcelBtn) exportExcelBtn.style.display = 'inline-flex';
+
+    // Show the output container (Reports page wraps content in #reportOutput)
+    const reportOutput = document.getElementById('reportOutput');
+    if (reportOutput) reportOutput.style.display = 'block';
+}
+
+// Helper: calculate expenditure totals per nationality from uploaded data
+function calculateNationalityTotals() {
+    const totals = { bangladeshi: 0, srilankan: 0, indian: 0, malagasy: 0 };
+
+    if (state.expenditures && state.expenditures.length > 0) {
+        state.expenditures.forEach(record => {
+            const nat = String(record.nationality).toLowerCase().replace(/\s+/g, '');
+            const key = nat.includes('banglad') ? 'bangladeshi'
+                      : nat.includes('sri')     ? 'srilankan'
+                      : nat.includes('indian')  ? 'indian'
+                      : nat.includes('malagasy')? 'malagasy'
+                      : null;
+            if (key) totals[key] += parseFloat(record.total) || 0;
+        });
+    }
+
+    return totals;
+}
+
+// Helper: build comparison table rows from live state
+function generateComparisonRows() {
+    const nationalities = [
+        { key: 'bangladeshi', label: 'Bangladeshi' },
+        { key: 'srilankan',   label: 'Sri Lankan'  },
+        { key: 'indian',      label: 'Indian'       },
+        { key: 'malagasy',    label: 'Malagasy'     }
+    ];
+
+    const employeeTotal = Object.values(state.employees).reduce((a, b) => a + b, 0);
+    const spendingTotals = calculateNationalityTotals();
+    const totalSpend = Object.values(spendingTotals).reduce((a, b) => a + b, 0);
+
+    return nationalities.map(nat => {
+        const employees = state.employees[nat.key] || 0;
+        const spending  = spendingTotals[nat.key]  || 0;
+        const perHead   = employees > 0 ? (spending / employees).toFixed(2) : '0.00';
+        const pctEmp    = employeeTotal > 0
+            ? ((employees / employeeTotal) * 100).toFixed(1)
+            : '0.0';
+
+        return `<tr>
+            <td>${nat.label}</td>
+            <td>${employees.toLocaleString()}</td>
+            <td>Rs ${spending.toFixed(2)}</td>
+            <td>Rs ${perHead}</td>
+            <td>${pctEmp}%</td>
+        </tr>`;
+    }).join('');
 }
 
 function exportReport(format) {
@@ -1315,9 +1410,12 @@ window.editEmployee = editEmployee;
 window.saveEmployee = saveEmployee;
 window.cancelEdit = cancelEdit;
 window.confirmUpload = confirmUpload;
+window.cancelUpload = cancelUpload;
 window.initHomeCharts = initHomeCharts;
 window.initTrendCharts = initTrendCharts;
 window.initPerHeadCharts = initPerHeadCharts;
 window.initComparisonCharts = initComparisonCharts;
 window.downloadEmployeeHistory = downloadEmployeeHistory;
 window.getEmployeeChangeHistory = getEmployeeChangeHistory;
+window.calculateNationalityTotals = calculateNationalityTotals;
+window.generateComparisonRows = generateComparisonRows;
