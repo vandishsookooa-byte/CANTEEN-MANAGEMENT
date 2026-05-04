@@ -315,16 +315,29 @@ def api_item_comparison():
 @app.route('/api/generate-report')
 def api_generate_report():
     """Generate report as PDF or Excel"""
+    ALLOWED_TYPES   = {'trend', 'per-head', 'comparison', 'detailed', 'cumulative'}
+    ALLOWED_FORMATS = {'excel', 'pdf'}
+    ALLOWED_PERIODS = set(
+        ['April 2026 (P1)', 'April 2026 (P2)', 'March 2026 (P1)', 'March 2026 (P2)', '']
+    )
+
     report_type = request.args.get('type', 'trend')
     format_type = request.args.get('format', 'excel')
-    period = request.args.get('period', '')
+    period      = request.args.get('period', '')
+
+    if report_type not in ALLOWED_TYPES:
+        return jsonify({'error': 'Invalid report type'}), 400
+    if format_type not in ALLOWED_FORMATS:
+        return jsonify({'error': 'Invalid format'}), 400
+    if period not in ALLOWED_PERIODS:
+        return jsonify({'error': 'Invalid period'}), 400
 
     try:
         if format_type == 'excel':
             return generate_excel_report(report_type, period)
         else:
             return generate_pdf_report(report_type, period)
-    except Exception as e:
+    except Exception:
         return jsonify({'error': 'An internal error occurred'}), 500
 
 def generate_excel_report(report_type, period=''):
